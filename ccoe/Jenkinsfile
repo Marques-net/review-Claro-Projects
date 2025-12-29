@@ -1,0 +1,15 @@
+@Library('SharedPipeline') _
+
+node {
+    stage('Call') {
+        try {
+            claroti_commonJenkinsPipeGeneric(scm: "scmmultibranch_ccoe_app")
+        }
+        catch (err) {
+            print err
+            currentBuild.result = 'FAILURE'
+            throw err
+        }
+    }
+}
+

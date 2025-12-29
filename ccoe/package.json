@@ -1,0 +1,15 @@
+{
+    "jenkins": {
+        "project_name": "pix-automatico",
+        "service_name": "omp-hub-payment-callback-ms",
+        "torre": "ti",
+        "squad": "jenkinspool",
+        "ssm_update": "yes",
+        "mail_notifier": "jenkinspool@globalhitss.com.br",
+        "slack_channel": "devops",
+        "slack_token": "PUmgo78hy6OFSj2u7ea9s724",
+        "slack_url": "https://jenkinspool.slack.com/services/hooks/jenkins-ci",
+        "slack_team": "jenkinspool.slack.com",
+        "slack_credential": "14b01044-a7eb-440b-bb97-00a234377fe7"
+    }
+}

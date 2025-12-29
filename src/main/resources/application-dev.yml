@@ -1,0 +1,133 @@
+server:
+  servlet:
+    context-path: ${CONTEXT_PATH:/payments/v1}
+  forward-headers-strategy: ${SERVER_HEADERS:framework}
+  port: ${SERVER_PORT:8080}
+  tomcat:
+    connection-timeout: 30s
+
+aws:
+  credentials:
+    key: ${KEY:kGQuWGvNx205s5C8x6VkzTO8SmyQMWLg}
+    secret: ${SECRET:OApD1odoOglo4LQE}
+    region: ${REGION:sa-east-1}
+  arn:
+    basicAuthTokenOmpHub: ${KEY:arn:aws:ssm:sa-east-1:264599301505:parameter/BASIC_AUTH_TOKEN_OMPHUB}
+    authHubUserToken: ${KEY:arn:aws:ssm:sa-east-1:264599301505:parameter/projeto-ti/dev/ms-ativacaopixautomatico/AUTH_HUB_USER_TOKEN_OMP}
+    authHubPasswordToken: ${KEY:arn:aws:ssm:sa-east-1:264599301505:parameter/projeto-ti/dev/ms-ativacaopixautomatico/AUTH_HUB_PASSWORD_TOKEN}
+  sqs:
+    queue-url: ${SQS_QUEUE_URL:https://sqs.sa-east-1.amazonaws.com/264599301505/dev-pix-automatico-callback.fifo}
+    dlq-url: ${SQS_DLQ_URL:https://sqs.sa-east-1.amazonaws.com/264599301505/dev-pix-automatico-callback-dlq.fifo}
+    consumer:
+      enabled: ${SQS_CONSUMER_ENABLED:true}
+      max-retries-sqs: ${SQS_MAX_RETRIES:3}
+      max-number-of-messages: ${SQS_MAX_NUMBER_OF_MESSAGES:10}
+      wait-time-seconds: ${SQS_WAIT_TIME_SECONDS:20}
+
+feature:
+  async-processing:
+    enabled: ${ASYNC_PROCESSING_ENABLED:true}
+
+apigee:
+  url: ${APIGEE_URL:https://api-test.claro.com.br}
+  credentials:
+    basic: ${BASIC:Basic a0dRdVdHdk54MjA1czVDOHg2Vmt6VE84U215UU1XTGc6T0FwRDFvZG9PZ2xvNExRRQ==}
+
+springdoc:
+  api-docs:
+    path: /api-docs # Customize the OpenAPI documentation endpoint
+  swagger-ui:
+    enabled: true # Enable or disable Swagger UI
+
+front:
+  url: https://dev-jornada-unica.clarobrasil.mobi
+
+logging:
+  level:
+    org:
+      springframework:
+        web: DEBUG
+
+ativacao:
+  simplificada:
+    loja: 1120
+    pdv: LB30
+
+omp:
+  journeys:
+    url: http://omp-hub-payment-journey-ms.dev.svc.cluster.local:8080
+
+multiplepayment:
+  transaction-order-id:
+    prefix: "SV"
+    suffix-format: "H%d"
+    base-length: 10
+    max-length: 16
+
+client:
+  retry:
+    max-retries-api: ${API_MAX_RETRIES:3}
+    retry-delay-api-seconds: ${API_RETRY_DELAY_SECONDS:5}
+  information:
+    payment:
+      url: /payments/v1/omphub/paymentjourneys/information_payments
+  bankinfo:
+    url: /payments/v1/claropay/psps
+  protocol:
+    url: /domains/v1/interactions
+  contract:
+    subscribers:
+      url: /customercontractsubscribers
+  sap:
+    redemptions:
+      url: /ordering/v1/materials/orders/redemptions
+    payments:
+      url: /ordering/v1/materials/orders/payments
+    billing:
+      payments:
+        url: /customerbill/v1/sap/billingpayments
+  transaction:
+    notification:
+      url: /payments/v1/omphub/transactions/notifications
+  apigee:
+    token:
+      url: /oauth2/v1/token
+  communication:
+    url: /communication/v1/messages
+    campaign: "HOMOLOG_PIXAUTO11_95559"
+    templates:
+      optin: "adesao_ao_pix_automatico_alterar_forma_de_pgto"
+      optout: "alteracao_de_pagamento_para_boleto"
+      agendamento: "adesao_ao_pix_automatico_alterar_falha_pgto"
+      pagamento: "pix_automatico_pagamento_com_sucesso"
+      alteracao: "adesao_ao_pix_automatico_alterar_forma_de_pgto"
+      cobranca: "adesao_ao_pix_automatico_alterar_forma_de_pgto"
+      falha_agendamento: "adesao_ao_pix_automatico_alterar_falha_agendamento"
+      incentivo_adesao: "pix_automatico_incentivo_a_adesao"
+    messages:
+      optin: "Cliente CLARO, sua fatura foi alterada para Pix Automático. Na sua próxima fatura deve constar a frase PIX AUTOMÁTICO"
+      optout: "Cliente CLARO, sua fatura foi alterada para boleto. Consulte mais informações através de nossos canais."
+      agendamento: "Cliente CLARO, sua fatura foi alterada para Pix Automático. Na sua próxima fatura deve constar a frase PIX AUTOMÁTICO"
+      pagamento: "Cliente CLARO, sua fatura foi paga via Pix Automático. Obrigado! Acompanhe seus pagamentos pelos nossos canais."
+      pagamento_avulso: "Cliente CLARO, sua fatura foi paga via Pix Automático. Obrigado! Acompanhe seus pagamentos pelos nossos canais."
+      alteracao: "Cliente CLARO, sua fatura foi alterada para Pix Automático. Na sua próxima fatura deve constar a frase PIX AUTOMÁTICO"
+      cobranca: "Cliente CLARO, Sua fatura não foi paga via Pix Automático. Atualize seus dados no banco e pague via Pix"
+      falha_agendamento: "Cliente CLARO, sua fatura em Pix Automático NÂO foi agendada no seu banco. Regularize seus dados junto ao banco."
+      incentivo_adesao: "Cliente CLARO, sua fatura foi cadastrada em PIX Automático. Não esqueça de confirmar o cadastro junto ao seu banco para efetivação do cadastro."
+  mobile:
+    subscribers:
+      url: /mobile/v1/subscribers
+      target: test06
+    customers:
+      billing:
+        details:
+          url: /mobile/v1/customers/billing/details
+          target: test06
+  customer:
+    residential:
+      url: /residential/v1/customers/contracts
+      target: test06 #test03
+  domains:
+    customercontractssubscribers:
+      url: /domains/v1/customercontractssubscribers
+      target: test06 #test03
