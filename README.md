@@ -160,7 +160,235 @@ graph TD
     H --> J[Notificação Canais]
     I --> J
 ```
+### Diagrama de Classe
+```mermaid
+classDiagram
+direction LR
 
+class CallbackController {
+  +processCallback(request)
+}
+
+class CallbackTypeDetectorService {
+  +detectTypeAndValidate(object)
+  +isValidCallbackType(object)
+}
+
+class CheckTypeObjectService {
+  <<interface>>
+  +isValid(request, nameClass)
+}
+
+class CheckTypeObjectServiceImpl {
+  +isValid(request, nameClass)
+}
+
+class CallbackValidator {
+  +validate(object, objectType)
+}
+
+class CallbackService {
+  +processCallback(json)
+  +processCallbackAsync(request)
+}
+
+class TransactionsCallbackUseCase {
+  <<interface>>
+  +sendCallback(request)
+}
+
+class PixCallbackUseCase {
+  <<interface>>
+  +sendCallback(request)
+}
+
+class CreditCardCallbackUseCase {
+  <<interface>>
+  +sendCallback(request)
+}
+
+class TefWebCallbackUseCase {
+  <<interface>>
+  +sendCallback(request)
+}
+
+class TransactionsCallbackUseCaseImpl {
+  +sendCallback(request)
+}
+
+class PixCallbackUseCaseImpl {
+  +sendCallback(request)
+}
+
+class CreditCardCallbackUseCaseImpl {
+  +sendCallback(request)
+}
+
+class TefWebCallbackUseCaseImpl {
+  +sendCallback(request)
+}
+
+class CallbackRequest~T~ {
+  +data: T
+}
+
+class TransactionsRequest {
+  +ompTransactionId
+  +callbackTarget
+  +targetSystem
+  +flowType
+  +event: EventDTO
+}
+
+class TefWebCallbackRequest {
+  +ompTransactionId
+  +service
+  +paymentType
+  +sales: List~SalesDTO~
+  +multiplePayment
+  +mixedPaymentTypes
+}
+
+class CreditCardCallbackRequest {
+  +ompTransactionId
+  +sucess
+  +service
+  +statusCode
+  +statusMessage
+  +transactionId
+  +flag
+  +card
+  +value
+  +numberInstallments
+  +orderId
+  +orderDate
+  +acquirator: AcquiratorDTO
+  +retryProcessor: List~RetryProcessorDTO~
+  +antifraud: AntifraudDTO
+}
+
+class PixCallbackRequest {
+  +ompTransactionId
+  +service
+  +paymentType
+  +paymentDate
+  +value
+  +endToEndId
+  +txId
+  +orderId
+}
+
+class EventDTO {
+  +type
+  +payment: List~PaymentDTO~
+  +customer: CustomerDTO
+  +additionalInfo
+  +originPaymentMethod: OriginPaymentMethodDTO
+  +targetPaymentMethod: TargetPaymentMethodDTO
+  +paymentMethod
+  +recurrenceId
+  +txId
+  +status
+  +updates: List~UpdatesDTO~
+  +attempts: List~AttemptsDTO~
+  +activation: ActivationDTO
+  +addon: AddonDTO
+}
+
+class PaymentDTO {
+  +type
+  +date
+  +value
+  +numberInstallments
+  +pointOfSales
+  +acquirer: AcquirerDTO
+  +pix: PixDTO
+  +cash: CashDTO
+  +tefweb: TefWebDTO
+}
+
+class InformationPaymentPort {
+  <<interface>>
+  +sendFindByIdentifier(identifier)
+  +updatePaymentInList(identifier, paymentType, request)
+  +sendUpdate(request)
+}
+
+class TransationsNotificationsPort {
+  <<interface>>
+  +send(uuid, request, headers)
+}
+
+class GenerateCallbackPixService {
+  <<interface>>
+  +generateRequest(request)
+}
+
+class GenerateCallbackTransactionsService {
+  <<interface>>
+  +generateRequest(request)
+}
+
+class ApigeeHeaderService {
+  <<interface>>
+  +generateHeaderApigee(uuid)
+}
+
+class PixEventMappingService {
+  <<interface>>
+  +isPixAutomaticoEvent(txId, paymentType)
+  +shouldNotify(txId, eventType)
+  +mapEventTypeToEnum(txId, eventType, status, paymentMethod, recurrenceId)
+  +mapPaymentTypeToEvent(txId, paymentType)
+}
+
+class NotificationManagerService {
+  <<interface>>
+  +processPixAutomaticoNotification(uuid, txId, eventType)
+}
+
+CallbackController --> CallbackService
+CallbackController --> CallbackTypeDetectorService
+CallbackController --> CallbackValidator
+CallbackController --> CallbackRequest~T~
+
+CallbackTypeDetectorService --> CheckTypeObjectService
+CallbackTypeDetectorService --> CallbackValidator
+CheckTypeObjectService <|.. CheckTypeObjectServiceImpl
+
+CallbackTypeDetectorService --> TransactionsRequest
+CallbackTypeDetectorService --> TefWebCallbackRequest
+CallbackTypeDetectorService --> CreditCardCallbackRequest
+CallbackTypeDetectorService --> PixCallbackRequest
+
+CallbackService --> TransactionsCallbackUseCase
+CallbackService --> PixCallbackUseCase
+CallbackService --> CreditCardCallbackUseCase
+CallbackService --> TefWebCallbackUseCase
+
+TransactionsCallbackUseCase <|.. TransactionsCallbackUseCaseImpl
+PixCallbackUseCase <|.. PixCallbackUseCaseImpl
+CreditCardCallbackUseCase <|.. CreditCardCallbackUseCaseImpl
+TefWebCallbackUseCase <|.. TefWebCallbackUseCaseImpl
+
+TransactionsCallbackUseCaseImpl --> InformationPaymentPort
+TransactionsCallbackUseCaseImpl --> TransationsNotificationsPort
+TransactionsCallbackUseCaseImpl --> GenerateCallbackTransactionsService
+TransactionsCallbackUseCaseImpl --> ApigeeHeaderService
+TransactionsCallbackUseCaseImpl --> NotificationManagerService
+TransactionsCallbackUseCaseImpl --> PixEventMappingService
+
+PixCallbackUseCaseImpl --> InformationPaymentPort
+PixCallbackUseCaseImpl --> TransationsNotificationsPort
+PixCallbackUseCaseImpl --> GenerateCallbackPixService
+PixCallbackUseCaseImpl --> ApigeeHeaderService
+PixCallbackUseCaseImpl --> PixEventMappingService
+PixCallbackUseCaseImpl --> NotificationManagerService
+
+TransactionsRequest --> EventDTO
+EventDTO --> PaymentDTO
+
+```
 ### Processamento Detalhado
 
 1. **Recepção**: Hub envia callback via HTTP POST
