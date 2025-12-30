@@ -181,6 +181,7 @@ class CheckTypeObjectService {
 
 class CheckTypeObjectServiceImpl {
   +isValid(request, nameClass)
+  -hasRequiredFields(node, fields)
 }
 
 class CallbackValidator {
@@ -190,6 +191,12 @@ class CallbackValidator {
 class CallbackService {
   +processCallback(json)
   +processCallbackAsync(request)
+}
+
+class CallbackServiceImpl {
+  +processCallback(json)
+  +processCallbackAsync(request)
+  -internalProcessCallback(object)
 }
 
 class TransactionsCallbackUseCase {
@@ -214,18 +221,100 @@ class TefWebCallbackUseCase {
 
 class TransactionsCallbackUseCaseImpl {
   +sendCallback(request)
+  -extractTxId(request)
+  -processNotificationsIfEligible(uuid, txId, request)
+  -getRootCauseMessage(e)
 }
 
 class PixCallbackUseCaseImpl {
   +sendCallback(request)
+  -processPixAutomaticoNotification(uuid, request)
+  -sendRtdmNotification(uuid, request, eventType)
+  -sendHubNotification(uuid, request)
 }
 
 class CreditCardCallbackUseCaseImpl {
   +sendCallback(request)
+  -determineErrorMessage(errorDetails)
+  -getRootCauseMessage(e)
 }
 
 class TefWebCallbackUseCaseImpl {
   +sendCallback(request)
+  -processMultiplePayment(request, info, uuid, identifier, dto, headerBuilder, originalTransactionId)
+  -processSinglePayment(request, info, uuid, identifier, dto, headerBuilder)
+  -updatePaymentStatusSuccess(identifier, uuid)
+  -handlePaymentError(e, identifier, uuid)
+  -extractBusinessException(e)
+  -determineErrorMessage(errorDetails)
+  -getRootCauseMessage(e)
+  -isCancellationCallback(request)
+  -processCancellationCallback(request, info, uuid, identifier, headerBuilder)
+  -updateJourneyCancellationStatus(identifier, tefwebStatus, uuid)
+  -extractTransactionStatus(request)
+}
+
+class SapIntegrationService {
+  +shouldSendToSap(info, currentPaymentType)
+  +areAllPaymentsApproved(info, currentPaymentType)
+  +updatePaymentStatusApproved(identifier, paymentType, transactionOrderId)
+  +updatePaymentStatusApproved(identifier, paymentType, transactionOrderId, callbackData)
+  +extractBaseTransactionOrderId(transactionOrderId)
+  +sendToSapRedemptionsAndPayments(uuid, request, info, headerBuilder, dto)
+  +sendToSapBillingPayments(uuid, request, info, headerBuilder, dto)
+  +sendChannelNotification(uuid, request, headerBuilder, info)
+  +hasBillingProducts(dto)
+  +hasSalesOrderId(dto, identifier)
+  -isValidUUID(value)
+  -getTransactionOrderIdForSap(info, dto)
+  -getPrefix()
+  -getSuffixFormat()
+  -getBaseLength()
+}
+
+class RetryService {
+  +executeWithRetrySyncVoid(uuid, operationName, operation)
+  +executeWithRetrySyncVoid(uuid, operationName, operation, callbackData)
+  -sendToDLQ(callbackData, exception)
+}
+
+class SqsCallbackListener {
+  +startPolling()
+  +stopPolling()
+  -pollMessages()
+  -processMessage(message)
+  -deleteMessage(receiptHandle)
+  -getRetryCount(messageSQS)
+  -handleProcessingError(messageSQS, messageId, txId, error, receiptHandle, retryCount)
+  -parseMessage(messageBody)
+  -extractDataAsJson(messageSQS)
+  -extractTxId(messageSQS)
+  #isRunning()
+  #setRunning(value)
+}
+
+class SqsMessageRepository {
+  +sendMessage(callbackRequest)
+  +sendToDLQ(message, error)
+  +resendForRetry(message)
+  -extractMessageGroupIdFromMessage(message)
+  -getStackTraceAsString(error)
+  -extractMessageGroupId(callbackRequest)
+}
+
+class JsonSanitizerUtil {
+  +sanitizeCallbackJson(jsonString, mapper)
+  -sanitizePaymentItem(paymentObj)
+  -isEscapedNullString(value)
+}
+
+class CallbackErrorNotificationService {
+  +notifyJourneyAboutCallbackFailure(identifier, maxRetries, lastException)
+}
+
+class ErrorResponseMapper {
+  +mapExceptionToErrorResponse(ex, path)
+  +mapMaxRetriesExceededError(identifier, maxRetries, lastException)
 }
 
 class CallbackRequest~T~ {
@@ -351,25 +440,32 @@ CallbackController --> CallbackService
 CallbackController --> CallbackTypeDetectorService
 CallbackController --> CallbackValidator
 CallbackController --> CallbackRequest~T~
+CallbackController --> JsonSanitizerUtil
 
 CallbackTypeDetectorService --> CheckTypeObjectService
 CallbackTypeDetectorService --> CallbackValidator
 CheckTypeObjectService <|.. CheckTypeObjectServiceImpl
+
+CallbackService <|.. CallbackServiceImpl
+CallbackServiceImpl --> SqsMessageRepository
 
 CallbackTypeDetectorService --> TransactionsRequest
 CallbackTypeDetectorService --> TefWebCallbackRequest
 CallbackTypeDetectorService --> CreditCardCallbackRequest
 CallbackTypeDetectorService --> PixCallbackRequest
 
-CallbackService --> TransactionsCallbackUseCase
-CallbackService --> PixCallbackUseCase
-CallbackService --> CreditCardCallbackUseCase
-CallbackService --> TefWebCallbackUseCase
+CallbackServiceImpl --> TransactionsCallbackUseCase
+CallbackServiceImpl --> PixCallbackUseCase
+CallbackServiceImpl --> CreditCardCallbackUseCase
+CallbackServiceImpl --> TefWebCallbackUseCase
 
 TransactionsCallbackUseCase <|.. TransactionsCallbackUseCaseImpl
 PixCallbackUseCase <|.. PixCallbackUseCaseImpl
 CreditCardCallbackUseCase <|.. CreditCardCallbackUseCaseImpl
 TefWebCallbackUseCase <|.. TefWebCallbackUseCaseImpl
+
+TefWebCallbackUseCaseImpl --> SapIntegrationService
+TefWebCallbackUseCaseImpl --> RetryService
 
 TransactionsCallbackUseCaseImpl --> InformationPaymentPort
 TransactionsCallbackUseCaseImpl --> TransationsNotificationsPort
@@ -384,6 +480,18 @@ PixCallbackUseCaseImpl --> GenerateCallbackPixService
 PixCallbackUseCaseImpl --> ApigeeHeaderService
 PixCallbackUseCaseImpl --> PixEventMappingService
 PixCallbackUseCaseImpl --> NotificationManagerService
+
+RetryService --> SqsMessageRepository
+SapIntegrationService --> InformationPaymentPort
+SapIntegrationService --> TransationsNotificationsPort
+SapIntegrationService --> RetryService
+
+SqsCallbackListener --> CallbackService
+SqsCallbackListener --> CallbackErrorNotificationService
+SqsCallbackListener --> SqsMessageRepository
+
+CallbackErrorNotificationService --> InformationPaymentPort
+CallbackErrorNotificationService --> ErrorResponseMapper
 
 TransactionsRequest --> EventDTO
 EventDTO --> PaymentDTO
